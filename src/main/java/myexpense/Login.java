@@ -4,7 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class Login extends JFrame {
-    private final AuthService auth = new AuthService(new JdbcUserRepository());
+    private final AuthService auth = new AuthService(new HibernateUserRepository());
     private JTextField txtEmail;
     private JPasswordField txtPassword;
     private JLabel lblPesan;

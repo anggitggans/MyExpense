@@ -1,8 +1,8 @@
 package myexpense;
 
-/** Akses data akun. Implementasi asli: JdbcUserRepository (MySQL). */
+/** Akses data akun. Implementasi database menggunakan Hibernate ORM. */
 public interface UserRepository {
-    /** Dilempar bila database tidak bisa diakses (MySQL mati, driver belum ditambahkan, dsb). */
+    /** Dilempar bila database tidak bisa diakses (MySQL mati, konfigurasi Hibernate/MySQL bermasalah, dsb). */
     class DbException extends Exception {
         public DbException(String pesan, Throwable sebab) { super(pesan, sebab); }
     }
