@@ -2,54 +2,83 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <groupId>myexpense</groupId>
+<modelVersion>4.0.0</modelVersion>
+<groupId>myexpense</groupId>
     <artifactId>myexpense-hibernate</artifactId>
     <version>1.0.0</version>
-    <properties>
+<properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>21</maven.compiler.release>
         <hibernate.version>6.6.11.Final</hibernate.version>
         <spring.version>6.2.3</spring.version>
+        <jasperreports.version>7.0.8</jasperreports.version>
     </properties>
+
     <dependencies>
+
+        <!-- Hibernate ORM -->
         <dependency>
             <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-core</artifactId>
             <version>${hibernate.version}</version>
         </dependency>
+
+        <!-- MariaDB Database -->
         <dependency>
             <groupId>org.mariadb.jdbc</groupId>
             <artifactId>mariadb-java-client</artifactId>
             <version>3.5.2</version>
             <scope>runtime</scope>
         </dependency>
+
+        <!-- SLF4J Logging -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
             <version>2.0.17</version>
             <scope>runtime</scope>
         </dependency>
+
+        <!-- Spring Framework -->
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
             <version>${spring.version}</version>
         </dependency>
+
+        <!-- JasperReports -->
+        <dependency>
+            <groupId>net.sf.jasperreports</groupId>
+            <artifactId>jasperreports</artifactId>
+            <version>${jasperreports.version}</version>
+        </dependency>
+
     </dependencies>
+
     <build>
         <plugins>
+
+            <!-- Java Compiler -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.13.0</version>
-                <configuration><release>21</release></configuration>
+                <configuration>
+                    <release>21</release>
+                </configuration>
             </plugin>
+
+            <!-- Run Application -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.5.0</version>
-                <configuration><mainClass>myexpense.Myexpense</mainClass></configuration>
+                <configuration>
+                    <mainClass>myexpense.Myexpense</mainClass>
+                </configuration>
             </plugin>
+
         </plugins>
     </build>
+
 </project>

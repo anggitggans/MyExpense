@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Template laporan keuangan MyExpense -->
+<jasperReport name="laporan_keuangan"
+    language="java"
+    pageWidth="595"
+    pageHeight="842"
+    columnWidth="555"
+    leftMargin="20"
+    rightMargin="20"
+    topMargin="25"
+    bottomMargin="25"
+    uuid="e9bb1a27-f975-4aa4-98f9-75524c5daafa">
+
+    <!-- FIELD DATA DARI TransaksiEntity -->
+    <field name="tanggal" class="java.time.LocalDate"/>
+    <field name="jenis" class="java.lang.String"/>
+    <field name="kategori" class="java.lang.String"/>
+    <field name="keterangan" class="java.lang.String"/>
+    <field name="nominal" class="java.math.BigDecimal"/>
+
+    <!-- JUDUL LAPORAN -->
+    <title height="110">
+        <element kind="staticText"
+            uuid="524767a9-e7e5-4041-9b08-5a7210b38e22"
+            x="0" y="15" width="555" height="45"
+            fontName="SansSerif"
+            fontSize="22"
+            bold="true"
+            hTextAlign="Center"
+            vTextAlign="Middle">
+            <text><![CDATA[LAPORAN KEUANGAN MYEXPENSE]]></text>
+        </element>
+
+        <element kind="staticText"
+            uuid="a4fc8d0a-5058-4c9d-8a26-a6150dc52c20"
+            x="0" y="65" width="555" height="25"
+            fontName="SansSerif"
+            fontSize="13"
+            forecolor="#666666"
+            hTextAlign="Center"
+            vTextAlign="Middle">
+            <text><![CDATA[Laporan Pemasukan dan Pengeluaran]]></text>
+        </element>
+    </title>
+
+    <!-- HEADER TABEL -->
+    <columnHeader height="38">
+        <element kind="staticText"
+            uuid="59de02b2-e771-4188-92f8-6153d75050cb"
+            x="0" y="3" width="105" height="30"
+            mode="Opaque" backcolor="#22744E"
+            forecolor="#FFFFFF"
+            fontName="SansSerif" fontSize="11" bold="true"
+            hTextAlign="Center" vTextAlign="Middle">
+            <text><![CDATA[Tanggal]]></text>
+        </element>
+
+        <element kind="staticText"
+            uuid="fa44c586-ab9c-4cc1-b045-f40a842780bf"
+            x="111" y="3" width="105" height="30"
+            mode="Opaque" backcolor="#22744E"
+            forecolor="#FFFFFF"
+            fontName="SansSerif" fontSize="11" bold="true"
+            hTextAlign="Center" vTextAlign="Middle">
+            <text><![CDATA[Jenis]]></text>
+        </element>
+
+        <element kind="staticText"
+            uuid="e46b78fd-9829-4ac0-a8d0-0252d2816a00"
+            x="222" y="3" width="105" height="30"
+            mode="Opaque" backcolor="#22744E"
+            forecolor="#FFFFFF"
+            fontName="SansSerif" fontSize="11" bold="true"
+            hTextAlign="Center" vTextAlign="Middle">
+            <text><![CDATA[Kategori]]></text>
+        </element>
+
+        <element kind="staticText"
+            uuid="332931cb-713d-41d5-ac20-53896dea338d"
+            x="333" y="3" width="105" height="30"
+            mode="Opaque" backcolor="#22744E"
+            forecolor="#FFFFFF"
+            fontName="SansSerif" fontSize="11" bold="true"
+            hTextAlign="Center" vTextAlign="Middle">
+            <text><![CDATA[Keterangan]]></text>
+        </element>
+
+        <element kind="staticText"
+            uuid="86ede60e-7f80-43b8-a1d4-390ae52c0daa"
+            x="444" y="3" width="111" height="30"
+            mode="Opaque" backcolor="#22744E"
+            forecolor="#FFFFFF"
+            fontName="SansSerif" fontSize="11" bold="true"
+            hTextAlign="Center" vTextAlign="Middle">
+            <text><![CDATA[Nominal]]></text>
+        </element>
+    </columnHeader>
+
+    <!-- DETAIL DATA TRANSAKSI -->
+    <detail>
+        <band height="35">
+
+            <!-- TANGGAL -->
+            <element kind="textField"
+                uuid="11111111-1111-4111-8111-111111111111"
+                x="0" y="2" width="105" height="27"
+                fontName="SansSerif" fontSize="10"
+                hTextAlign="Center" vTextAlign="Middle"
+                blankWhenNull="true">
+                <expression><![CDATA[
+                    $F{tanggal} == null ? "" :
+                    $F{tanggal}.format(
+                        java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy")
+                    )
+                ]]></expression>
+            </element>
+
+            <!-- JENIS -->
+            <element kind="textField"
+                uuid="22222222-2222-4222-8222-222222222222"
+                x="111" y="2" width="105" height="27"
+                fontName="SansSerif" fontSize="10"
+                hTextAlign="Center" vTextAlign="Middle"
+                blankWhenNull="true">
+                <expression><![CDATA[$F{jenis}]]></expression>
+            </element>
+
+            <!-- KATEGORI -->
+            <element kind="textField"
+                uuid="33333333-3333-4333-8333-333333333333"
+                x="222" y="2" width="105" height="27"
+                fontName="SansSerif" fontSize="10"
+                hTextAlign="Center" vTextAlign="Middle"
+                blankWhenNull="true">
+                <expression><![CDATA[$F{kategori}]]></expression>
+            </element>
+
+            <!-- KETERANGAN -->
+            <element kind="textField"
+                uuid="44444444-4444-4444-8444-444444444444"
+                x="333" y="2" width="105" height="27"
+                fontName="SansSerif" fontSize="10"
+                hTextAlign="Center" vTextAlign="Middle"
+                blankWhenNull="true">
+                <expression><![CDATA[$F{keterangan}]]></expression>
+            </element>
+
+            <!-- NOMINAL RUPIAH -->
+            <element kind="textField"
+                uuid="55555555-5555-4555-8555-555555555555"
+                x="444" y="2" width="111" height="27"
+                fontName="SansSerif" fontSize="10"
+                hTextAlign="Right" vTextAlign="Middle"
+                blankWhenNull="true">
+                <expression><![CDATA[
+                    $F{nominal} == null ? "" :
+                    new java.text.DecimalFormat(
+                        "'Rp' #,##0.00",
+                        new java.text.DecimalFormatSymbols(
+                            new java.util.Locale("id", "ID")
+                        )
+                    ).format($F{nominal})
+                ]]></expression>
+            </element>
+
+            <!-- GARIS PEMBATAS -->
+            <element kind="line"
+                uuid="66666666-6666-4666-8666-666666666666"
+                x="0" y="33" width="555" height="1">
+                <pen lineWidth="0.5" lineColor="#CCCCCC"/>
+            </element>
+
+        </band>
+    </detail>
+
+    <columnFooter height="5"/>
+    <pageFooter height="25">
+        <element kind="textField"
+            uuid="77777777-7777-4777-8777-777777777777"
+            x="400" y="2" width="155" height="20"
+            fontName="SansSerif" fontSize="9"
+            forecolor="#777777"
+            hTextAlign="Right">
+            <expression><![CDATA["Halaman " + $V{PAGE_NUMBER}]]></expression>
+        </element>
+    </pageFooter>
+
+    <summary height="1"/>
+
+</jasperReport>

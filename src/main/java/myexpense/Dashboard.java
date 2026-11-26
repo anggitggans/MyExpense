@@ -62,6 +62,7 @@ public class Dashboard extends JFrame {
         JButton refresh=new JButton("Perbarui Ringkasan"); refresh.addActionListener(e->muatSemua()); center.add(refresh,BorderLayout.SOUTH);
         p.add(center,BorderLayout.CENTER); return p;
     }
+
     private JPanel card(String title,JLabel value,Color color){
         JPanel p=new JPanel(new GridLayout(2,1,0,8)); p.setBackground(Color.WHITE); p.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0,5,0,0,color),BorderFactory.createEmptyBorder(15,15,15,15)));
         JLabel l=new JLabel(title); l.setForeground(Color.GRAY); value.setFont(new Font("SansSerif",Font.BOLD,20)); p.add(l); p.add(value); return p;
@@ -72,7 +73,8 @@ public class Dashboard extends JFrame {
         JPanel tools=new JPanel(new FlowLayout(FlowLayout.LEFT)); tools.setBackground(BG);
         tools.add(new JLabel("Cari:")); tools.add(cari); tools.add(new JLabel("Jenis:")); tools.add(filterJenis); tools.add(new JLabel("Kategori:")); tools.add(filterKategori);
         tools.add(new JLabel("Dari (yyyy-mm-dd):")); tools.add(dari); tools.add(new JLabel("Sampai:")); tools.add(sampai);
-        JButton apply=new JButton("Terapkan Filter"); apply.addActionListener(e->muatTabel()); JButton reset=new JButton("Reset"); reset.addActionListener(e->{cari.setText("");filterJenis.setSelectedIndex(0);filterKategori.setSelectedIndex(0);dari.setText("");sampai.setText("");muatTabel();});
+        JButton apply=new JButton("Terapkan Filter"); apply.addActionListener(e->muatTabel());
+        JButton reset=new JButton("Reset"); reset.addActionListener(e->{cari.setText("");filterJenis.setSelectedIndex(0);filterKategori.setSelectedIndex(0);dari.setText("");sampai.setText("");muatTabel();});
         tools.add(apply);tools.add(reset); p.add(tools,BorderLayout.NORTH);
         table.setRowHeight(25); p.add(new JScrollPane(table),BorderLayout.CENTER);
         JPanel actions=new JPanel(new FlowLayout(FlowLayout.RIGHT)); actions.setBackground(BG);
@@ -81,16 +83,92 @@ public class Dashboard extends JFrame {
         actions.add(add);actions.add(edit);actions.add(del);p.add(actions,BorderLayout.SOUTH); return p;
     }
 
-    private JPanel formTransaksi(Object unused){ JPanel p=new JPanel(new BorderLayout()); p.setBackground(BG); p.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
+    private JPanel formTransaksi(Object unused){
+        JPanel p=new JPanel(new BorderLayout()); p.setBackground(BG); p.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
         JButton add=new JButton("Buka Form Tambah Transaksi"); add.addActionListener(e->new TransaksiDialog(this,null).setVisible(true)); p.add(add,BorderLayout.NORTH);
-        JLabel info=new JLabel("Catat pemasukan atau pengeluaran dengan mengisi jenis, tanggal, kategori, nominal, dan keterangan.",SwingConstants.CENTER); p.add(info,BorderLayout.CENTER); return p; }
+        JLabel info=new JLabel("Catat pemasukan atau pengeluaran dengan mengisi jenis, tanggal, kategori, nominal, dan keterangan.",SwingConstants.CENTER); p.add(info,BorderLayout.CENTER); return p;
+    }
 
+    // Panel laporan: grafik pengeluaran dan tombol untuk membuka laporan JasperReports.
     private JPanel laporanPanel(){
         JPanel p=new JPanel(new BorderLayout(10,10)); p.setBackground(BG); p.setBorder(BorderFactory.createEmptyBorder(18,18,18,18));
-        JLabel summary=new JLabel("Laporan bulan berjalan akan dihitung dari transaksi tersimpan."); p.add(summary,BorderLayout.NORTH);
-        JPanel chart=new JPanel(){ protected void paintComponent(Graphics g){super.paintComponent(g); Graphics2D g2=(Graphics2D)g.create(); g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON); List<TransaksiEntity> data=repo.semuaByUser(user.id); Map<String,BigDecimal> sums=new LinkedHashMap<>(); for(TransaksiEntity t:data)if("Pengeluaran".equalsIgnoreCase(t.getJenis()) && YearMonth.from(t.getTanggal()).equals(YearMonth.now()))sums.merge(t.getKategori(),t.getNominal(),BigDecimal::add); int x=35,y=25; BigDecimal max=sums.values().stream().max(BigDecimal::compareTo).orElse(BigDecimal.ONE); g2.setFont(new Font("SansSerif",Font.PLAIN,12)); for(var en:sums.entrySet()){int w=max.signum()==0?0:en.getValue().multiply(BigDecimal.valueOf(Math.max(100,getWidth()-260))).divide(max,0,java.math.RoundingMode.HALF_UP).intValue();g2.setColor(new Color(49,139,96));g2.fillRoundRect(x,y,w,24,8,8);g2.setColor(Color.DARK_GRAY);g2.drawString(en.getKey()+" - "+rupiah.format(en.getValue()),x+w+8,y+17);y+=42;} if(sums.isEmpty())g2.drawString("Belum ada data pengeluaran.",x,y);g2.dispose();}};
-        chart.setBackground(Color.WHITE); chart.setOpaque(true); chart.setPreferredSize(new Dimension(760,420)); p.add(new JScrollPane(chart),BorderLayout.CENTER);
-        JButton refresh=new JButton("Perbarui Laporan"); refresh.addActionListener(e->{summary.setText("Total pengeluaran bulan ini: "+rupiah.format(totalPeriode("Pengeluaran",YearMonth.now().atDay(1),YearMonth.now().atEndOfMonth())));chart.repaint();}); p.add(refresh,BorderLayout.SOUTH); return p;
+        JLabel summary=new JLabel("Laporan bulan berjalan akan dihitung dari transaksi tersimpan.");
+        JPanel bagianAtas=new JPanel(new BorderLayout(8,8)); bagianAtas.setBackground(BG);
+        bagianAtas.add(summary,BorderLayout.NORTH);
+        JPanel filter=new JPanel(new FlowLayout(FlowLayout.LEFT)); filter.setBackground(BG);
+        JTextField tanggalDari=new JTextField(YearMonth.now().atDay(1).toString(),10);
+        JTextField tanggalSampai=new JTextField(LocalDate.now().toString(),10);
+        filter.add(new JLabel("Dari (yyyy-mm-dd):")); filter.add(tanggalDari);
+        filter.add(new JLabel("Sampai:")); filter.add(tanggalSampai);
+        JButton cetak=new JButton("Lihat Laporan Keuangan");
+        JButton refresh=new JButton("Perbarui Laporan");
+        filter.add(cetak); filter.add(refresh);
+        bagianAtas.add(filter,BorderLayout.SOUTH); p.add(bagianAtas,BorderLayout.NORTH);
+
+        JPanel chart=new JPanel(){
+            protected void paintComponent(Graphics g){
+                super.paintComponent(g);
+                Graphics2D g2=(Graphics2D)g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+                List<TransaksiEntity> data=repo.semuaByUser(user.id);
+                Map<String,BigDecimal> sums=new LinkedHashMap<>();
+                for(TransaksiEntity t:data) if("Pengeluaran".equalsIgnoreCase(t.getJenis()) && YearMonth.from(t.getTanggal()).equals(YearMonth.now())) sums.merge(t.getKategori(),t.getNominal(),BigDecimal::add);
+                int x=35,y=25;
+                BigDecimal max=sums.values().stream().max(BigDecimal::compareTo).orElse(BigDecimal.ONE);
+                g2.setFont(new Font("SansSerif",Font.PLAIN,12));
+                for(var en:sums.entrySet()){
+                    int w=max.signum()==0?0:en.getValue().multiply(BigDecimal.valueOf(Math.max(100,getWidth()-260))).divide(max,0,java.math.RoundingMode.HALF_UP).intValue();
+                    g2.setColor(new Color(49,139,96)); g2.fillRoundRect(x,y,w,24,8,8);
+                    g2.setColor(Color.DARK_GRAY); g2.drawString(en.getKey()+" - "+rupiah.format(en.getValue()),x+w+8,y+17); y+=42;
+                }
+                if(sums.isEmpty())g2.drawString("Belum ada data pengeluaran.",x,y);
+                g2.dispose();
+            }
+        };
+        chart.setBackground(Color.WHITE); chart.setOpaque(true); chart.setPreferredSize(new Dimension(760,420));
+
+        refresh.addActionListener(e->{
+            YearMonth bulan=YearMonth.now();
+            summary.setText("Total pengeluaran bulan ini: "+rupiah.format(totalPeriode("Pengeluaran",bulan.atDay(1),bulan.atEndOfMonth())));
+            chart.repaint();
+        });
+
+      
+cetak.addActionListener(e -> {
+    try {
+        LocalDate mulai = parseTanggal(tanggalDari.getText());
+        LocalDate akhir = parseTanggal(tanggalSampai.getText());
+
+        if (mulai == null || akhir == null) {
+            throw new IllegalArgumentException(
+                "Tanggal awal dan akhir wajib diisi."
+            );
+        }
+
+        if (mulai.isAfter(akhir)) {
+            throw new IllegalArgumentException(
+                "Tanggal awal tidak boleh melebihi tanggal akhir."
+            );
+        }
+
+        new LaporanService().tampilkanLaporan(
+            user.id, mulai, akhir
+        );
+
+    } catch (Exception ex) {
+        ex.printStackTrace();
+
+        JOptionPane.showMessageDialog(
+            this,
+            "Gagal menampilkan laporan: " + ex.getMessage()
+                + "\nPeriksa Output NetBeans untuk detail error.",
+            "Kesalahan Laporan",
+            JOptionPane.ERROR_MESSAGE
+        );
+    }
+});
+
+        p.add(new JScrollPane(chart),BorderLayout.CENTER); return p;
     }
 
     private JPanel pengaturanPanel(){
@@ -102,68 +180,71 @@ public class Dashboard extends JFrame {
         password.addActionListener(e->{JPasswordField a=new JPasswordField(),b=new JPasswordField();Object[] fields={"Password baru",a,"Konfirmasi",b};if(JOptionPane.showConfirmDialog(this,fields,"Ganti Password",JOptionPane.OK_CANCEL_OPTION)==JOptionPane.OK_OPTION){try{String msg=auth.resetPassword(user,new String(a.getPassword()),new String(b.getPassword()));if(msg.isEmpty())JOptionPane.showMessageDialog(this,"Password berhasil diubah.");else JOptionPane.showMessageDialog(this,msg);}catch(Exception ex){JOptionPane.showMessageDialog(this,ex.getMessage());}}});
         return p;
     }
+
     private void addRow(JPanel p,GridBagConstraints c,int row,String label,JComponent field){c.gridx=0;c.gridy=row;p.add(new JLabel(label),c);c.gridx=1;p.add(field,c);}
 
-    private void muatSemua() {
+    private void muatSemua(){
         muatTabel();
-
-        BigDecimal masuk = totalPeriode("Pemasukan", null, null);
-        BigDecimal keluar = totalPeriode("Pengeluaran", null, null);
-
-        totalMasuk.setText(rupiah.format(masuk));
-        totalKeluar.setText(rupiah.format(keluar));
-        saldo.setText(rupiah.format(masuk.subtract(keluar)));
+        BigDecimal masuk=totalPeriode("Pemasukan",null,null);
+        BigDecimal keluar=totalPeriode("Pengeluaran",null,null);
+        totalMasuk.setText(rupiah.format(masuk)); totalKeluar.setText(rupiah.format(keluar)); saldo.setText(rupiah.format(masuk.subtract(keluar)));
     }
 
-    private BigDecimal totalPeriode(String jenis, LocalDate start, LocalDate end) {
-        try {
-            return repo.total(user.id, jenis, start, end);
-        } catch (Exception ex) {
-            pesan(ex.getMessage() == null ? "Gagal menghitung total transaksi." : ex.getMessage());
-            return BigDecimal.ZERO;
-        }
+    private BigDecimal totalPeriode(String jenis,LocalDate start,LocalDate end){
+        try{return repo.total(user.id,jenis,start,end);}
+        catch(Exception ex){pesan(ex.getMessage()==null?"Gagal menghitung total transaksi.":ex.getMessage());return BigDecimal.ZERO;}
     }
 
-    private void muatTabel() {
-        try {
-            LocalDate start = parseTanggal(dari.getText());
-            LocalDate end = parseTanggal(sampai.getText());
-
-            List<TransaksiEntity> rows = repo.cari(
-                user.id,
-                cari.getText(),
-                (String) filterJenis.getSelectedItem(),
-                (String) filterKategori.getSelectedItem(),
-                start,
-                end
-            );
-
+    private void muatTabel(){
+        try{
+            LocalDate start=parseTanggal(dari.getText()); LocalDate end=parseTanggal(sampai.getText());
+            List<TransaksiEntity> rows=repo.cari(user.id,cari.getText(),(String)filterJenis.getSelectedItem(),(String)filterKategori.getSelectedItem(),start,end);
             model.setRowCount(0);
-            for (TransaksiEntity t : rows) {
-                model.addRow(new Object[]{
-                    t.getId(),
-                    t.getTanggal(),
-                    t.getJenis(),
-                    t.getKategori(),
-                    t.getKeterangan(),
-                    rupiah.format(t.getNominal())
-                });
-            }
-        } catch (Exception ex) {
-            pesan(ex.getMessage() == null ? "Gagal memuat riwayat transaksi." : ex.getMessage());
-        }
+            for(TransaksiEntity t:rows)model.addRow(new Object[]{t.getId(),t.getTanggal(),t.getJenis(),t.getKategori(),t.getKeterangan(),rupiah.format(t.getNominal())});
+        }catch(Exception ex){pesan(ex.getMessage()==null?"Gagal memuat riwayat transaksi.":ex.getMessage());}
     }
 
     private LocalDate parseTanggal(String s){return s==null||s.isBlank()?null:LocalDate.parse(s.trim(),DateTimeFormatter.ISO_LOCAL_DATE);}
-    private void editTerpilih(){int row=table.getSelectedRow();if(row<0){pesan("Pilih transaksi yang ingin diedit.");return;}int id=(int)model.getValueAt(table.convertRowIndexToModel(row),0);TransaksiEntity t=repo.cariById(id,user.id);if(t!=null)new TransaksiDialog(this,t).setVisible(true);}
-    private void hapusTerpilih(){int row=table.getSelectedRow();if(row<0){pesan("Pilih transaksi yang ingin dihapus.");return;}int id=(int)model.getValueAt(table.convertRowIndexToModel(row),0);if(JOptionPane.showConfirmDialog(this,"Hapus transaksi terpilih?","Konfirmasi Hapus",JOptionPane.YES_NO_OPTION)==JOptionPane.YES_OPTION){repo.hapus(id,user.id);muatSemua();}}
+
+    private void editTerpilih(){
+        int row=table.getSelectedRow(); if(row<0){pesan("Pilih transaksi yang ingin diedit.");return;}
+        int id=(int)model.getValueAt(table.convertRowIndexToModel(row),0);
+        TransaksiEntity t=repo.cariById(id,user.id); if(t!=null)new TransaksiDialog(this,t).setVisible(true);
+    }
+
+    private void hapusTerpilih(){
+        int row=table.getSelectedRow(); if(row<0){pesan("Pilih transaksi yang ingin dihapus.");return;}
+        int id=(int)model.getValueAt(table.convertRowIndexToModel(row),0);
+        if(JOptionPane.showConfirmDialog(this,"Hapus transaksi terpilih?","Konfirmasi Hapus",JOptionPane.YES_NO_OPTION)==JOptionPane.YES_OPTION){repo.hapus(id,user.id);muatSemua();}
+    }
+
     private void pesan(String s){status.setText(s);}
 
     private class TransaksiDialog extends JDialog{
-        private final TransaksiEntity edit; private final JTextField tanggal=new JTextField(LocalDate.now().toString()),kategori=new JTextField(),nominal=new JTextField(),keterangan=new JTextField();private final JComboBox<String> jenis=new JComboBox<>(new String[]{"Pengeluaran","Pemasukan"});
-        TransaksiDialog(Frame owner,TransaksiEntity data){super(owner,data==null?"Tambah Transaksi":"Edit Transaksi",true);edit=data;setSize(420,390);setLocationRelativeTo(owner);setLayout(new GridLayout(0,2,8,8));((JPanel)getContentPane()).setBorder(BorderFactory.createEmptyBorder(15,15,15,15));
+        private final TransaksiEntity edit;
+        private final JTextField tanggal=new JTextField(LocalDate.now().toString()),kategori=new JTextField(),nominal=new JTextField(),keterangan=new JTextField();
+        private final JComboBox<String> jenis=new JComboBox<>(new String[]{"Pengeluaran","Pemasukan"});
+
+        TransaksiDialog(Frame owner,TransaksiEntity data){
+            super(owner,data==null?"Tambah Transaksi":"Edit Transaksi",true); edit=data;
+            setSize(420,390);setLocationRelativeTo(owner);setLayout(new GridLayout(0,2,8,8));
+            ((JPanel)getContentPane()).setBorder(BorderFactory.createEmptyBorder(15,15,15,15));
             if(data!=null){tanggal.setText(data.getTanggal().toString());jenis.setSelectedItem(data.getJenis());kategori.setText(data.getKategori());nominal.setText(data.getNominal().toPlainString());keterangan.setText(data.getKeterangan());}
-            add(new JLabel("Jenis"));add(jenis);add(new JLabel("Tanggal (yyyy-mm-dd)"));add(tanggal);add(new JLabel("Kategori"));add(kategori);add(new JLabel("Nominal"));add(nominal);add(new JLabel("Keterangan"));add(keterangan);JButton save=new JButton("Simpan"),cancel=new JButton("Batal");add(save);add(cancel);cancel.addActionListener(e->dispose());save.addActionListener(e->simpan());}
-        void simpan(){try{LocalDate d=LocalDate.parse(tanggal.getText().trim());String kat=kategori.getText().trim();BigDecimal n=new BigDecimal(nominal.getText().trim());if(kat.isEmpty()||n.signum()<=0)throw new IllegalArgumentException("Kategori wajib diisi dan nominal harus lebih dari 0.");if(edit==null)repo.tambah(user.id,d,(String)jenis.getSelectedItem(),kat,keterangan.getText().trim(),n);else repo.ubah(edit.getId(),user.id,d,(String)jenis.getSelectedItem(),kat,keterangan.getText().trim(),n);dispose();muatSemua();}catch(Exception ex){JOptionPane.showMessageDialog(this,"Data tidak valid: "+ex.getMessage(),"Validasi",JOptionPane.ERROR_MESSAGE);}}
+            add(new JLabel("Jenis"));add(jenis);add(new JLabel("Tanggal (yyyy-mm-dd)"));add(tanggal);
+            add(new JLabel("Kategori"));add(kategori);add(new JLabel("Nominal"));add(nominal);
+            add(new JLabel("Keterangan"));add(keterangan);
+            JButton save=new JButton("Simpan"),cancel=new JButton("Batal");add(save);add(cancel);
+            cancel.addActionListener(e->dispose());save.addActionListener(e->simpan());
+        }
+
+        void simpan(){
+            try{
+                LocalDate d=LocalDate.parse(tanggal.getText().trim());String kat=kategori.getText().trim();BigDecimal n=new BigDecimal(nominal.getText().trim());
+                if(kat.isEmpty()||n.signum()<=0)throw new IllegalArgumentException("Kategori wajib diisi dan nominal harus lebih dari 0.");
+                if(edit==null)repo.tambah(user.id,d,(String)jenis.getSelectedItem(),kat,keterangan.getText().trim(),n);
+                else repo.ubah(edit.getId(),user.id,d,(String)jenis.getSelectedItem(),kat,keterangan.getText().trim(),n);
+                dispose();muatSemua();
+            }catch(Exception ex){JOptionPane.showMessageDialog(this,"Data tidak valid: "+ex.getMessage(),"Validasi",JOptionPane.ERROR_MESSAGE);}
+        }
     }
 }
